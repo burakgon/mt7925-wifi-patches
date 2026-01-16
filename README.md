@@ -1,16 +1,40 @@
-# MT7925 WiFi Stability Patches for Linux
+# MT7925 WiFi Fix for Linux
 
-Fixes WiFi stability issues on the **MediaTek MT7925** (Filogic 360) WiFi 7 chip by building the latest mt76 driver from the wireless-next kernel tree.
+> **Fix WiFi disconnects, slow speeds, and instability on MediaTek MT7925 (Filogic 360) WiFi 7 chips**
 
-## Tested On
+Having WiFi problems on your new laptop? Random disconnects? Slow speeds? Connection drops? This repo builds the latest mt76 driver from the wireless-next kernel tree to fix stability issues not yet in stable kernels.
 
-| Hardware | OS | Kernel | Status |
-|----------|-----|--------|--------|
-| ASUS ROG Flow Z13 (2025) | Fedora 43 | 6.18.5 | ✅ Working |
+## Symptoms This Fixes
 
-## The Problem
+- ❌ WiFi randomly disconnects
+- ❌ Slow WiFi speeds
+- ❌ WiFi won't connect after sleep/suspend
+- ❌ Connection drops under load
+- ❌ "No Wi-Fi adapter found" after kernel update
+- ❌ High latency / ping spikes
 
-The MT7925 WiFi chip has stability issues with stock kernel drivers - random disconnects, slow speeds, or connection drops. The wireless-next tree contains fixes not yet merged into stable kernels.
+## Supported Devices
+
+| Device | Chip | Status |
+|--------|------|--------|
+| ASUS ROG Flow Z13 (2025) | MT7925 | ✅ Tested |
+| ASUS ROG Zephyrus G14/G16 (2024+) | MT7925 | Should work |
+| ASUS Zenbook / Vivobook (2024+) | MT7925 | Should work |
+| Laptops with MediaTek RZ738 | MT7925 | Should work |
+| Any device with MT7925 WiFi 7 | MT7925 | Should work |
+
+**Have a different device?** Open an issue to add it to the list!
+
+## Supported Distros
+
+Works on any Linux distro with kernel 6.x+:
+- Fedora 39+ ✅ (tested on Fedora 43)
+- Ubuntu 24.04+
+- Arch Linux
+- openSUSE Tumbleweed
+- Debian Testing/Unstable
+- Pop!_OS
+- Linux Mint
 
 ## Quick Start
 
@@ -19,81 +43,99 @@ The MT7925 WiFi chip has stability issues with stock kernel drivers - random dis
 git clone https://github.com/burakgon/mt7925-wifi-patches.git
 cd mt7925-wifi-patches
 
-# Run the rebuild script (downloads sources on first run)
+# Install dependencies (pick your distro)
+# Fedora:
+sudo dnf install kernel-devel kernel-headers gcc make git
+
+# Ubuntu/Debian:
+sudo apt install linux-headers-$(uname -r) build-essential git
+
+# Arch:
+sudo pacman -S linux-headers base-devel git
+
+# Run the rebuild script
 sudo ./mt76-rebuild.sh
 ```
 
 ## After Kernel Updates
 
-When you update your kernel, rebuild the driver:
+Rebuild the driver after each kernel update:
 
 ```bash
-cd /path/to/mt7925-wifi-patches
+cd mt7925-wifi-patches
 sudo ./mt76-rebuild.sh
 ```
 
-## Desktop Notifications
+## Desktop Notifications (Optional)
 
-A notification system alerts you when patches need to be reapplied after a kernel update.
+Get notified when patches need to be reapplied:
 
-**Setup autostart notification:**
 ```bash
+# Autostart on login (KDE/GNOME/XFCE)
 mkdir -p ~/.config/autostart
 cp mt76-check.desktop ~/.config/autostart/
-```
 
-**Add app launcher entry:**
-```bash
+# Add to app launcher
 mkdir -p ~/.local/share/applications
 cp mt76-status.desktop ~/.local/share/applications/
 ```
 
-## Files
-
-| File | Description |
-|------|-------------|
-| `mt76-rebuild.sh` | One-command rebuild and install script |
-| `mt76-check.sh` | Notification script for patch status |
-| `CLAUDE.md` | Instructions for Claude Code AI assistant |
-
 ## How It Works
 
-1. Clones the `wireless-next` kernel tree (latest WiFi driver development)
-2. Builds the mt76 driver modules against your current kernel
-3. Replaces stock kernel modules with patched versions
-4. Creates a marker file to track installation status
+1. Downloads the `wireless-next` kernel tree (latest WiFi driver development)
+2. Builds mt76 driver modules for your kernel
+3. Replaces stock modules with patched versions
+4. Backs up original modules for easy restore
 
-## Verifying Installation
+## Verify It's Working
 
 ```bash
-# Check if custom modules are loaded
+# Check modules are loaded
 lsmod | grep mt79
 
-# Check for custom marker
+# Check custom marker exists
 ls /lib/modules/$(uname -r)/kernel/drivers/net/wireless/mediatek/mt76/.custom-mt76
 ```
 
-## Restoring Stock Drivers
+## Restore Stock Drivers
 
 ```bash
-# Backup modules are saved during first install
-cd /path/to/mt7925-wifi-patches
-sudo cp -r ./backup-modules/* \
-    /lib/modules/$(uname -r)/kernel/drivers/net/wireless/mediatek/mt76/
+cd mt7925-wifi-patches
+sudo cp -r ./backup-modules/* /lib/modules/$(uname -r)/kernel/drivers/net/wireless/mediatek/mt76/
 sudo depmod -a
 sudo reboot
 ```
+
+## Troubleshooting
+
+**Build fails with "kernel headers not found"**
+```bash
+# Fedora
+sudo dnf install kernel-devel-$(uname -r)
+
+# Ubuntu
+sudo apt install linux-headers-$(uname -r)
+```
+
+**WiFi still not working after install**
+- Reboot your system
+- Check `dmesg | grep mt79` for errors
+- Open an issue with your logs
 
 ## Related Links
 
 - [wireless-next tree](https://git.kernel.org/pub/scm/linux/kernel/git/wireless/wireless-next.git/)
 - [OpenWrt mt76 driver](https://github.com/openwrt/mt76)
-- [MT7925 on WikiDevi](https://wikidevi.wi-cat.ru/MediaTek_MT7925)
-
-## License
-
-Scripts in this repository are released under MIT License. The mt76 driver is licensed under BSD-3-Clause-Clear.
+- [Linux Wireless](https://wireless.wiki.kernel.org/)
 
 ## Contributing
 
-Found a fix or improvement? PRs welcome!
+Found a fix? Have a different device working? PRs and issues welcome!
+
+## License
+
+MIT License. See [LICENSE](LICENSE) file.
+
+---
+
+**Keywords:** MT7925 Linux driver, MediaTek WiFi fix, Filogic 360 Linux, WiFi 7 Linux, mt76 driver, ASUS ROG WiFi fix, Linux WiFi disconnects, RZ738 Linux, WiFi not working Linux, kernel WiFi patch
