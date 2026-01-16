@@ -13,6 +13,17 @@ sudo ./mt76-rebuild.sh
 
 No manual patching, no kernel recompilation — just run the script and reboot.
 
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| 🔧 **One-Command Rebuild** | Single script downloads, builds, and installs everything |
+| 🔔 **Desktop Notifications** | Get notified on login when drivers need rebuilding after kernel update |
+| 📱 **App Launcher Integration** | Check patch status from KDE/GNOME app menu |
+| 💾 **Auto Backup** | Original drivers backed up automatically for easy restore |
+| 🔄 **Auto Update** | Script pulls latest fixes from wireless-next before building |
+| 🐧 **Multi-Distro** | Works on Fedora, Ubuntu, Arch, and more |
+
 ## Symptoms This Fixes
 
 - ❌ WiFi randomly disconnects
