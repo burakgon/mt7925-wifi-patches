@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=MT7925 WiFi Patch Check
+Comment=Check MT7925 WiFi driver patch status on login
+Exec=~/.local/bin/mt76-check.sh
+Hidden=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=5

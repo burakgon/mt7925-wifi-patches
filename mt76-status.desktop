@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=WiFi Patch Status
+Comment=Check MT7925 WiFi driver patch status
+Exec=~/.local/bin/mt76-check.sh
+Icon=network-wireless
+Terminal=false
+Categories=System;Settings;Network;
+Keywords=wifi;wireless;mt76;mt7925;patch;driver;mediatek;

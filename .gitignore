@@ -1,0 +1,18 @@
+# Source trees (downloaded by rebuild script)
+wireless-next/
+openwrt-mt76/
+
+# Backup modules
+backup-modules/
+
+# Build artifacts
+*.o
+*.ko
+*.mod
+*.mod.c
+*.symvers
+*.order
+.tmp_versions/
+
+# Logs
+*.log
