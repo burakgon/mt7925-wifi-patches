@@ -1,6 +1,6 @@
-# MT7925 WiFi Fix for Linux
+# MT7925 WiFi Fix for Linux (ASUS ROG Flow Z13 2025 & More)
 
-> **Fix WiFi disconnects, slow speeds, and instability on MediaTek MT7925 (Filogic 360) WiFi 7 chips**
+> **Fix WiFi disconnects, slow speeds, and instability on MediaTek MT7925 (Filogic 360) WiFi 7 chips — tested on ASUS ROG Flow Z13 2025**
 
 ## What This Does
 
@@ -35,15 +35,19 @@ No manual patching, no kernel recompilation — just run the script and reboot.
 
 ## Supported Devices
 
+Originally built for **ASUS ROG Flow Z13 (2025)** but works on any laptop with the MT7925 chip:
+
 | Device | Chip | Status |
 |--------|------|--------|
-| ASUS ROG Flow Z13 (2025) | MT7925 | ✅ Tested |
+| **ASUS ROG Flow Z13 (2025)** | MT7925 | ✅ **Tested & Working** |
 | ASUS ROG Zephyrus G14/G16 (2024+) | MT7925 | Should work |
 | ASUS Zenbook / Vivobook (2024+) | MT7925 | Should work |
 | Laptops with MediaTek RZ738 | MT7925 | Should work |
 | Any device with MT7925 WiFi 7 | MT7925 | Should work |
 
 **Have a different device?** Open an issue to add it to the list!
+
+> 💡 **ASUS ROG Flow Z13 2025 users:** This fix was specifically developed and tested on your device. It fixes the WiFi instability issues on Linux.
 
 ## Supported Distros
 
@@ -158,4 +162,4 @@ MIT License. See [LICENSE](LICENSE) file.
 
 ---
 
-**Keywords:** MT7925 Linux driver, MediaTek WiFi fix, Filogic 360 Linux, WiFi 7 Linux, mt76 driver, ASUS ROG WiFi fix, Linux WiFi disconnects, RZ738 Linux, WiFi not working Linux, kernel WiFi patch
+**Keywords:** MT7925 Linux driver, MediaTek WiFi fix, Filogic 360 Linux, WiFi 7 Linux, mt76 driver, ASUS ROG WiFi fix, Linux WiFi disconnects, RZ738 Linux, WiFi not working Linux, kernel WiFi patch, ASUS ROG Flow Z13 2025 Linux, Z13 WiFi fix, ASUS Z13 2025 WiFi not working, ROG Flow Z13 Linux WiFi, ASUS Z13 Fedora WiFi, ASUS Z13 Ubuntu WiFi, ASUS Z13 Arch Linux
