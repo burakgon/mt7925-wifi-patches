@@ -11,8 +11,7 @@ This project builds and installs custom mt76 WiFi drivers from the wireless-next
 When the user gets a kernel update and needs to rebuild the driver:
 
 ```bash
-cd ~/Development/mt7925-wifi-patches
-sudo bash mt76-rebuild.sh
+sudo ./mt76-rebuild.sh
 ```
 
 That's it. The script handles everything: pulling updates, building, unloading old modules, installing new ones, and loading them.
@@ -21,14 +20,13 @@ That's it. The script handles everything: pulling updates, building, unloading o
 
 1. **Update source:**
    ```bash
-   cd ~/Development/mt7925-wifi-patches/wireless-next
-   git pull
+   git -C wireless-next pull
    ```
 
 2. **Build:**
    ```bash
    KVER=$(uname -r)
-   SRC_DIR=~/Development/mt7925-wifi-patches/wireless-next/drivers/net/wireless/mediatek/mt76
+   SRC_DIR=$(pwd)/wireless-next/drivers/net/wireless/mediatek/mt76
    make -C /lib/modules/$KVER/build M=$SRC_DIR clean
    make -C /lib/modules/$KVER/build M=$SRC_DIR \
        CONFIG_MT76_CORE=m \
@@ -59,7 +57,7 @@ That's it. The script handles everything: pulling updates, building, unloading o
 
 - `mt76-rebuild.sh` - One-command rebuild and install
 - `mt76-check.sh` - Shows notification with patch status
-- `wireless-next/` - Kernel source tree with mt76 driver
+- `wireless-next/` - Kernel source tree with mt76 driver (auto-downloaded)
 - `backup-modules/` - Backup of original Fedora modules
 
 ## Hardware
@@ -75,7 +73,6 @@ OpenWrt may have additional MT7925 fixes not yet in wireless-next. Check and app
 1. **Check OpenWrt mt76 commits:**
    ```bash
    # Clone or update OpenWrt mt76 repo
-   cd ~/Development/mt7925-wifi-patches
    if [[ -d openwrt-mt76 ]]; then
        git -C openwrt-mt76 pull
    else
@@ -141,5 +138,5 @@ modinfo mt76 | head -10
 ls -la /lib/modules/$(uname -r)/kernel/drivers/net/wireless/mediatek/mt76/.custom-mt76
 
 # Manually trigger notification
-~/Development/mt7925-wifi-patches/mt76-check.sh
+./mt76-check.sh
 ```

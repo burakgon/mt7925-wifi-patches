@@ -16,7 +16,7 @@ The MT7925 WiFi chip has stability issues with stock kernel drivers - random dis
 
 ```bash
 # Clone this repo
-git clone https://github.com/YOUR_USERNAME/mt7925-wifi-patches.git
+git clone https://github.com/burakgon/mt7925-wifi-patches.git
 cd mt7925-wifi-patches
 
 # Run the rebuild script (downloads sources on first run)
@@ -28,7 +28,7 @@ sudo ./mt76-rebuild.sh
 When you update your kernel, rebuild the driver:
 
 ```bash
-cd ~/Development/mt7925-wifi-patches
+cd /path/to/mt7925-wifi-patches
 sudo ./mt76-rebuild.sh
 ```
 
@@ -77,7 +77,8 @@ ls /lib/modules/$(uname -r)/kernel/drivers/net/wireless/mediatek/mt76/.custom-mt
 
 ```bash
 # Backup modules are saved during first install
-sudo cp -r ~/Development/mt7925-wifi-patches/backup-modules/* \
+cd /path/to/mt7925-wifi-patches
+sudo cp -r ./backup-modules/* \
     /lib/modules/$(uname -r)/kernel/drivers/net/wireless/mediatek/mt76/
 sudo depmod -a
 sudo reboot
