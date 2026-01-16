@@ -2,7 +2,16 @@
 
 > **Fix WiFi disconnects, slow speeds, and instability on MediaTek MT7925 (Filogic 360) WiFi 7 chips**
 
-Having WiFi problems on your new laptop? Random disconnects? Slow speeds? Connection drops? This repo builds the latest mt76 driver from the wireless-next kernel tree to fix stability issues not yet in stable kernels.
+## What This Does
+
+This tool **automatically downloads, builds, and installs the latest WiFi drivers** for the MediaTek MT7925 chip from the Linux kernel's development tree (`wireless-next`). These drivers contain stability fixes that haven't reached stable kernels yet.
+
+**One command to fix your WiFi:**
+```bash
+sudo ./mt76-rebuild.sh
+```
+
+No manual patching, no kernel recompilation — just run the script and reboot.
 
 ## Symptoms This Fixes
 
