@@ -53,12 +53,35 @@ That's it. The script handles everything: pulling updates, building, unloading o
    sudo modprobe mt7925e
    ```
 
+## Revert to Original Drivers
+
+To undo all changes and restore original Fedora drivers:
+
+```bash
+sudo ./mt76-revert.sh
+```
+
+This removes custom modules, ASPM config, power save script, and restores original drivers.
+
 ## Key Files
 
 - `mt76-rebuild.sh` - One-command rebuild and install
+- `mt76-revert.sh` - Undo all changes, restore original drivers
 - `mt76-check.sh` - Shows notification with patch status
 - `wireless-next/` - Kernel source tree with mt76 driver (auto-downloaded)
 - `backup-modules/` - Backup of original Fedora modules
+
+## Stability Settings
+
+The rebuild script automatically configures these for stability:
+
+**ASPM Disabled** (`/etc/modprobe.d/mt7925.conf`):
+- Disables PCIe Active State Power Management
+- Prevents random disconnects and freezes
+
+**Power Save Disabled** (`/etc/NetworkManager/dispatcher.d/99-mt7925-powersave-off`):
+- Disables WiFi power save when interface comes up
+- Prevents latency spikes and connection drops
 
 ## Hardware
 

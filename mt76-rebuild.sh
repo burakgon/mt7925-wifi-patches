@@ -79,6 +79,30 @@ cp "$SRC_DIR/mt7925/mt7925e.ko" "$MOD_DIR/mt7925/"
 
 # Mark as custom
 echo "$KVER - $(date)" > "$MOD_DIR/.custom-mt76"
+
+# Disable ASPM for stability
+MODPROBE_CONF="/etc/modprobe.d/mt7925.conf"
+if [[ ! -f "$MODPROBE_CONF" ]]; then
+    echo "options mt7925e disable_aspm=1" > "$MODPROBE_CONF"
+    echo "Created $MODPROBE_CONF (ASPM disabled for stability)"
+fi
+
+# Disable WiFi power save for stability
+POWERSAVE_SCRIPT="/etc/NetworkManager/dispatcher.d/99-mt7925-powersave-off"
+if [[ ! -f "$POWERSAVE_SCRIPT" ]]; then
+    cat > "$POWERSAVE_SCRIPT" << 'SCRIPT'
+#!/bin/bash
+# Disable power save for MT7925 WiFi
+IFACE="$1"
+ACTION="$2"
+if [[ "$ACTION" == "up" ]] && iw dev "$IFACE" info 2>/dev/null | grep -q "type managed"; then
+    iw dev "$IFACE" set power_save off 2>/dev/null
+fi
+SCRIPT
+    chmod +x "$POWERSAVE_SCRIPT"
+    echo "Created $POWERSAVE_SCRIPT (WiFi power save disabled)"
+fi
+
 depmod -a
 
 # Load
