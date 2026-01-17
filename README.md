@@ -18,10 +18,13 @@ No manual patching, no kernel recompilation — just run the script and reboot.
 | Feature | Description |
 |---------|-------------|
 | 🔧 **One-Command Rebuild** | Single script downloads, builds, and installs everything |
-| 🔔 **Desktop Notifications** | Get notified on login when drivers need rebuilding after kernel update |
+| ⚡ **ASPM Disabled** | Disables PCIe power management to prevent disconnects |
+| 🔋 **Power Save Disabled** | Disables WiFi power save to prevent latency issues |
+| 🔔 **Desktop Notifications** | Get notified on login with driver, ASPM, and power save status |
 | 📱 **App Launcher Integration** | Check patch status from KDE/GNOME app menu |
 | 💾 **Auto Backup** | Original drivers backed up automatically for easy restore |
 | 🔄 **Auto Update** | Script pulls latest fixes from wireless-next before building |
+| ↩️ **Easy Revert** | One command to restore original Fedora drivers |
 | 🐧 **Multi-Distro** | Works on Fedora, Ubuntu, Arch, and more |
 
 ## Symptoms This Fixes
@@ -110,6 +113,17 @@ cp mt76-status.desktop ~/.local/share/applications/
 2. Builds mt76 driver modules for your kernel
 3. Replaces stock modules with patched versions
 4. Backs up original modules for easy restore
+5. Disables ASPM (PCIe power management) for stability
+6. Disables WiFi power save to prevent latency issues
+
+## Stability Settings
+
+The script automatically configures these settings to prevent common issues:
+
+| Setting | File | Purpose |
+|---------|------|---------|
+| **ASPM Disabled** | `/etc/modprobe.d/mt7925.conf` | Prevents random disconnects and freezes |
+| **Power Save Off** | NetworkManager dispatcher script | Prevents latency spikes and connection drops |
 
 ## Verify It's Working
 
@@ -123,12 +137,14 @@ ls /lib/modules/$(uname -r)/kernel/drivers/net/wireless/mediatek/mt76/.custom-mt
 
 ## Restore Stock Drivers
 
+To undo all changes and restore original drivers:
+
 ```bash
 cd mt7925-wifi-patches
-sudo cp -r ./backup-modules/* /lib/modules/$(uname -r)/kernel/drivers/net/wireless/mediatek/mt76/
-sudo depmod -a
-sudo reboot
+sudo ./mt76-revert.sh
 ```
+
+This removes custom modules, ASPM config, power save script, and restores original drivers.
 
 ## Troubleshooting
 
