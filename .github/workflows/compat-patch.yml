@@ -22,3 +22,16 @@ jobs:
 
       - name: Validate compatibility patch
         run: ./tests/test-compat-patch.sh
+
+  legacy-kernel-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install kernel build dependencies
+        run: sudo apt-get update && sudo apt-get install --yes bc bison flex libelf-dev libssl-dev
+
+      - name: Build against Linux 7.0 headers
+        run: ./tests/build-legacy-kernel.sh
