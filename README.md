@@ -157,6 +157,22 @@ sudo dnf install kernel-devel-$(uname -r)
 sudo apt install linux-headers-$(uname -r)
 ```
 
+**Build fails around `IEEE80211_MIN_ACTION_SIZE` or `action_code`**
+
+This means the latest `wireless-next` source uses a newer action-frame API
+than the installed kernel headers. The rebuild script detects the older API
+and applies the included compatibility patch automatically. Update this
+repository and rerun the script:
+
+```bash
+git pull --ff-only
+sudo ./mt76-rebuild.sh
+```
+
+If the script reports that the compatibility patch no longer applies, open an
+issue and include the full build output and `uname -r` result. Do not continue
+to the install step with partially built modules.
+
 **WiFi still not working after install**
 - Reboot your system
 - Check `dmesg | grep mt79` for errors

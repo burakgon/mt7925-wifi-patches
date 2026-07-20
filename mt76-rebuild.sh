@@ -10,6 +10,57 @@ KDIR="/lib/modules/$KVER/build"
 SRC_DIR="$SCRIPT_DIR/wireless-next/drivers/net/wireless/mediatek/mt76"
 MOD_DIR="/lib/modules/$KVER/kernel/drivers/net/wireless/mediatek/mt76"
 BACKUP_DIR="$SCRIPT_DIR/backup-modules"
+COMPAT_PATCH="$SCRIPT_DIR/patches/legacy-action-frame-api.patch"
+
+restore_compat_patch() {
+    local patch_state="$SCRIPT_DIR/wireless-next/.git/mt7925-legacy-action-api-patch"
+
+    if [[ ! -f "$patch_state" ]]; then
+        return
+    fi
+
+    if ! git -C wireless-next apply --reverse --check "$COMPAT_PATCH"; then
+        echo "ERROR: Cannot restore the wireless-next source before updating."
+        echo "Remove wireless-next and run this script again."
+        exit 1
+    fi
+
+    git -C wireless-next apply --reverse "$COMPAT_PATCH"
+    rm -f "$patch_state"
+}
+
+apply_compat_patch() {
+    local ieee80211_header="$KDIR/include/linux/ieee80211.h"
+    local patch_state="$SCRIPT_DIR/wireless-next/.git/mt7925-legacy-action-api-patch"
+
+    if [[ ! -f "$ieee80211_header" ]]; then
+        echo "ERROR: Kernel header not found at $ieee80211_header"
+        exit 1
+    fi
+
+    # Linux kernels before the action-frame API change use an object-like
+    # IEEE80211_MIN_ACTION_SIZE macro and keep action_code in each frame type.
+    if grep -Eq '^[[:space:]]*#define[[:space:]]+IEEE80211_MIN_ACTION_SIZE\(' "$ieee80211_header"; then
+        return
+    fi
+
+    if ! grep -Eq '^[[:space:]]*#define[[:space:]]+IEEE80211_MIN_ACTION_SIZE[[:space:]]' "$ieee80211_header"; then
+        echo "ERROR: Unsupported IEEE 802.11 action-frame API in $ieee80211_header"
+        exit 1
+    fi
+
+    echo "Applying compatibility patch for the installed kernel headers..."
+    if git -C wireless-next apply --check "$COMPAT_PATCH"; then
+        git -C wireless-next apply "$COMPAT_PATCH"
+        touch "$patch_state"
+    elif git -C wireless-next apply --reverse --check "$COMPAT_PATCH"; then
+        echo "wireless-next already uses the compatible action-frame API."
+    else
+        echo "ERROR: wireless-next changed and the kernel compatibility patch no longer applies."
+        echo "Please open an issue and include your kernel version: $KVER"
+        exit 1
+    fi
+}
 
 echo "MT7925 WiFi Driver Rebuild"
 echo "=========================="
@@ -37,8 +88,11 @@ if [[ ! -d "wireless-next" ]]; then
     git clone --depth=1 https://git.kernel.org/pub/scm/linux/kernel/git/wireless/wireless-next.git
 else
     echo "[1/6] Updating wireless-next source..."
+    restore_compat_patch
     git -C wireless-next pull --ff-only 2>/dev/null || echo "Already up to date or offline"
 fi
+
+apply_compat_patch
 
 # Backup original modules (first run only)
 if [[ ! -d "$BACKUP_DIR" ]] || [[ -z "$(ls -A "$BACKUP_DIR" 2>/dev/null)" ]]; then
@@ -58,7 +112,7 @@ make -C "$KDIR" M="$SRC_DIR" \
     CONFIG_MT792x_LIB=m \
     CONFIG_MT7925_COMMON=m \
     CONFIG_MT7925E=m \
-    modules -j$(nproc)
+    modules -j"$(nproc)"
 
 # Unload current modules
 echo "[4/6] Unloading current modules..."
