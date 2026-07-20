@@ -15,6 +15,7 @@ trap cleanup EXIT
 source_files=(
     "drivers/net/wireless/mediatek/mt76/mt76_connac_mac.c"
     "drivers/net/wireless/mediatek/mt76/mt7925/mac.c"
+    "drivers/net/wireless/mediatek/mt76/mt7925/mcu.c"
     "drivers/net/wireless/mediatek/mt76/mt7996/mac.c"
 )
 
@@ -40,6 +41,10 @@ grep -q 'IEEE80211_MIN_ACTION_SIZE + 1 + 1 + 2' \
     "$TEST_DIR/drivers/net/wireless/mediatek/mt76/mt76_connac_mac.c"
 grep -q 'mgmt->u.action.u.addba_req.action_code' \
     "$TEST_DIR/drivers/net/wireless/mediatek/mt76/mt7925/mac.c"
+grep -q 'IEEE80211_EML_CAP_EMLSR_PADDING_DELAY' \
+    "$TEST_DIR/drivers/net/wireless/mediatek/mt76/mt7925/mcu.c"
+grep -q 'IEEE80211_EML_CAP_EMLSR_TRANSITION_DELAY' \
+    "$TEST_DIR/drivers/net/wireless/mediatek/mt76/mt7925/mcu.c"
 
 git -C "$TEST_DIR" apply --reverse --check "$PATCH_FILE"
 git -C "$TEST_DIR" apply --reverse "$PATCH_FILE"

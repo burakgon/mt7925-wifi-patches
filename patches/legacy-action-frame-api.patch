@@ -30,6 +30,18 @@ diff --git a/drivers/net/wireless/mediatek/mt76/mt7925/mac.c b/drivers/net/wirel
  		tid = MT_TX_ADDBA;
  	else if (ieee80211_is_mgmt(hdr->frame_control))
  		tid = MT_TX_NORMAL;
+diff --git a/drivers/net/wireless/mediatek/mt76/mt7925/mcu.c b/drivers/net/wireless/mediatek/mt76/mt7925/mcu.c
+--- a/drivers/net/wireless/mediatek/mt76/mt7925/mcu.c
++++ b/drivers/net/wireless/mediatek/mt76/mt7925/mcu.c
+@@ -1956,6 +1956,6 @@
+ 	eml_cap = (vif->cfg.eml_cap & (IEEE80211_EML_CAP_EMLSR_SUPP |
+ 				       IEEE80211_EML_CAP_TRANSITION_TIMEOUT)) |
+-		  (ext_capa->eml_capabilities & (IEEE80211_EML_CAP_EML_PADDING_DELAY |
+-						IEEE80211_EML_CAP_EML_TRANSITION_DELAY));
++		  (ext_capa->eml_capabilities & (IEEE80211_EML_CAP_EMLSR_PADDING_DELAY |
++						IEEE80211_EML_CAP_EMLSR_TRANSITION_DELAY));
+ 
+ 	if (eml_cap & IEEE80211_EML_CAP_EMLSR_SUPP) {
 diff --git a/drivers/net/wireless/mediatek/mt76/mt7996/mac.c b/drivers/net/wireless/mediatek/mt76/mt7996/mac.c
 --- a/drivers/net/wireless/mediatek/mt76/mt7996/mac.c
 +++ b/drivers/net/wireless/mediatek/mt76/mt7996/mac.c
