@@ -89,19 +89,19 @@ jobs:
         include:
           - kernel: v6.18
             toolchain: gcc
-            patches: action-frame,eml,nan,aql,alloc-flex
+            patches: action-frame,eml,nan,aql,alloc-flex,rx-link-sta
           - kernel: v7.0
             toolchain: gcc
-            patches: action-frame,eml,nan,aql
+            patches: action-frame,eml,nan,aql,rx-link-sta
           - kernel: v7.1
             toolchain: gcc
-            patches: eml,nan,aql
+            patches: eml,nan,aql,rx-link-sta
           - kernel: v7.2
             toolchain: gcc
-            patches: aql
+            patches: aql,rx-link-sta
           - kernel: v7.1
             toolchain: llvm
-            patches: eml,nan,aql
+            patches: eml,nan,aql,rx-link-sta
           - kernel: current-native
             toolchain: gcc
             patches: none
@@ -178,14 +178,15 @@ jobs:
                 printf native
               fi
             }
-            detected_features=$(printf 'action-frame=%s,eml=%s,nan=%s,aql=%s,alloc-flex=%s' \
+            detected_features=$(printf 'action-frame=%s,eml=%s,nan=%s,aql=%s,alloc-flex=%s,rx-link-sta=%s' \
               "$(feature_state action-frame legacy)" \
               "$(feature_state eml legacy)" \
               "$(feature_state nan disabled)" \
               "$(feature_state aql pre-aql)" \
-              "$(feature_state alloc-flex legacy)")
+              "$(feature_state alloc-flex legacy)" \
+              "$(feature_state rx-link-sta legacy)")
           else
-            detected_features='action-frame=unknown,eml=unknown,nan=unknown,aql=unknown,alloc-flex=unknown'
+            detected_features='action-frame=unknown,eml=unknown,nan=unknown,aql=unknown,alloc-flex=unknown,rx-link-sta=unknown'
             patch_csv=unavailable
           fi
 
@@ -289,7 +290,7 @@ jobs:
           set -e
           if ((detect_status != 0)); then
             printf '%s\n' \
-              'Detected features: action-frame=unknown,eml=unknown,nan=unknown,aql=unknown,alloc-flex=unknown'
+              'Detected features: action-frame=unknown,eml=unknown,nan=unknown,aql=unknown,alloc-flex=unknown,rx-link-sta=unknown'
             printf 'Patch IDs: unavailable\n'
             exit "$detect_status"
           fi
@@ -304,12 +305,13 @@ jobs:
               printf native
             fi
           }
-          detected_features=$(printf 'action-frame=%s,eml=%s,nan=%s,aql=%s,alloc-flex=%s' \
+          detected_features=$(printf 'action-frame=%s,eml=%s,nan=%s,aql=%s,alloc-flex=%s,rx-link-sta=%s' \
             "$(feature_state action-frame legacy)" \
             "$(feature_state eml legacy)" \
             "$(feature_state nan disabled)" \
             "$(feature_state aql pre-aql)" \
-            "$(feature_state alloc-flex legacy)")
+            "$(feature_state alloc-flex legacy)" \
+            "$(feature_state rx-link-sta legacy)")
 
           printf 'Detected features: %s\n' "$detected_features"
           printf 'Patch IDs: %s\n' "$patch_csv"

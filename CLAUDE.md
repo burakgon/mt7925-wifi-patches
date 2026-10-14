@@ -25,6 +25,7 @@ by build metadata:
 - `nan`
 - `aql`
 - `alloc-flex`
+- `rx-link-sta`
 
 Legacy NAN compatibility disables NAN and NDI as one unit when the host NAN
 contract is incomplete. Linux 6.18, 7.0, and 7.1 select that path. AQL
@@ -36,6 +37,11 @@ Linux 6.18 additionally selects `alloc-flex`, restoring the equivalent legacy
 `kzalloc(struct_size(...), GFP_KERNEL)` allocation because its slab headers do
 not provide `kzalloc_flex()`.
 
+`rx-link-sta` restores the station-based `ieee80211_rx_list()` contract after
+wireless-next switched the public RX API to link stations. Every tested kernel
+row through Linux 7.2 selects it; a source/header generation that already
+declares the link-station argument uses the native path.
+
 Patch application is atomic: every selected patch passes `git apply --check`
 before source changes. Put compatibility changes in independently selectable
 files under `patches/`; do not tell users to edit the cleaned source checkout.
@@ -44,10 +50,10 @@ Expected source-tag API coverage:
 
 | Headers | Selected compatibility |
 | --- | --- |
-| Linux 6.18 | action-frame, eml, nan, aql, alloc-flex |
-| Linux 7.0 | action-frame, eml, nan, aql |
-| Linux 7.1 | eml, nan, aql |
-| Linux 7.2 | aql |
+| Linux 6.18 | action-frame, eml, nan, aql, alloc-flex, rx-link-sta |
+| Linux 7.0 | action-frame, eml, nan, aql, rx-link-sta |
+| Linux 7.1 | eml, nan, aql, rx-link-sta |
+| Linux 7.2 | aql, rx-link-sta |
 | Current native API | none |
 
 Feature probes remain authoritative when a distribution backports APIs.

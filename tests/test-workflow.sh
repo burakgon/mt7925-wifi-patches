@@ -30,9 +30,11 @@ v618_row=$(awk '
     capture { print }
     capture && /patches:/ { exit }
 ' "$WORKFLOW")
-[[ $v618_row == *'patches: action-frame,eml,nan,aql,alloc-flex'* ]] ||
-    fail 'Linux 6.18 matrix row omits alloc-flex compatibility'
+[[ $v618_row == *'patches: action-frame,eml,nan,aql,alloc-flex,rx-link-sta'* ]] ||
+    fail 'Linux 6.18 matrix row omits alloc-flex or rx-link-sta compatibility'
 grep -Fq 'alloc-flex=%s' "$WORKFLOW" ||
     fail 'workflow diagnostics omit alloc-flex feature state'
+grep -Fq 'rx-link-sta=%s' "$WORKFLOW" ||
+    fail 'workflow diagnostics omit rx-link-sta feature state'
 
 printf 'Workflow static gate and current-native matrix contract passed.\n'

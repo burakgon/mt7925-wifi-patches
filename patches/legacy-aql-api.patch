@@ -4,7 +4,7 @@ diff --git a/drivers/net/wireless/mediatek/mt76/tx.c b/drivers/net/wireless/medi
 @@ -499,12 +499,8 @@ mt76_txq_send_burst(struct mt76_phy *phy, struct mt76_queue *q,
  	bool stop = false;
  	int idx;
- 
+
 -	if (test_bit(MT_WCID_FLAG_PS, &wcid->flags)) {
 -		if (!(dev->drv->drv_flags & MT_DRV_HW_PS_BUFFERING))
 -			return 0;
@@ -13,6 +13,6 @@ diff --git a/drivers/net/wireless/mediatek/mt76/tx.c b/drivers/net/wireless/medi
 -	}
 +	if (test_bit(MT_WCID_FLAG_PS, &wcid->flags))
 +		return 0;
- 
- 	if (atomic_read(&wcid->non_aql_packets) >= MT_MAX_NON_AQL_PKT)
- 		return 0;
+
+ 	if (atomic_read(&mt76_wcid_primary(wcid)->non_aql_packets) >=
+ 	    MT_MAX_NON_AQL_PKT)

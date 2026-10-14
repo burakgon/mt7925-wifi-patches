@@ -39,6 +39,13 @@ Linux 6.18 also selects `alloc-flex`: current mt76's `kzalloc_flex()` call is
 rewritten to the overflow-safe legacy `kzalloc(struct_size(...), GFP_KERNEL)`
 form because that helper was introduced later.
 
+Every tested kernel row through Linux 7.2 also selects `rx-link-sta`:
+wireless-next now hands received frames to mac80211 with a link station, while
+those headers still take a station in `ieee80211_rx_list()`. The patch restores
+the station-based call and the matching RX status link fields, and only a
+source/header generation that already provides the link-station API uses the
+native path.
+
 Source-tag and current-native jobs use `modules_prepare` and permit unresolved
 base-kernel symbols, so they test API compatibility, not whether a module can
 be loaded. A separate CI job builds against Fedora Rawhide's packaged
@@ -94,8 +101,9 @@ LLVM=1 ./mt76-rebuild.sh
 ```
 
 The script fetches and cleans the current `wireless-next/main`, feature-probes
-the target headers, applies only the required action-frame, EML, NAN, and AQL
-compatibility patches, and builds only the five modules listed above. Unknown
+the target headers, applies only the required action-frame, EML, NAN, AQL,
+allocation, and RX link-station compatibility patches, and builds only the five
+modules listed above. Unknown
 header or source shapes stop before installation. A repository-local lock
 rejects concurrent rebuilds before either run can modify the shared source
 checkout.

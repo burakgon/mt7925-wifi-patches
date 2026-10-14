@@ -34,6 +34,17 @@ struct_has_members() {
     done
 }
 
+rx_list_has_arg_type() {
+    local mac80211=$1 type=$2 declaration
+
+    declaration=$(awk '
+        /^void ieee80211_rx_list\(/ { inside = 1 }
+        inside { print }
+        inside && /;/ { exit }
+    ' "$mac80211")
+    [[ -n $declaration && $declaration == *"$type"* ]]
+}
+
 has_nan_api() {
     local ieee80211_nan=$1 nl80211=$2 cfg80211=$3 mac80211=$4
 
@@ -125,6 +136,7 @@ detect_patches() {
     local mac80211="$kdir/include/net/mac80211.h"
     local symvers="$kdir/Module.symvers"
     local file current_action=0 legacy_action=0 current_eml=0 legacy_eml=0
+    local current_rx=0 legacy_rx=0
 
     for file in "$action" "$slab" "$nl80211" "$cfg80211" "$mac80211"; do
         [[ -f $file ]] || die "required file not found: $file"
@@ -146,6 +158,10 @@ detect_patches() {
     fi
     [[ $((current_eml + legacy_eml)) -eq 1 ]] || die "unsupported EML API in $eml"
 
+    rx_list_has_arg_type "$mac80211" 'struct ieee80211_link_sta *' && current_rx=1
+    rx_list_has_arg_type "$mac80211" 'struct ieee80211_sta *' && legacy_rx=1
+    [[ $((current_rx + legacy_rx)) -eq 1 ]] || die "unsupported RX API in $mac80211"
+
     ((current_action)) || printf '%s\n' action-frame
     ((current_eml)) || printf '%s\n' eml
 
@@ -162,6 +178,8 @@ detect_patches() {
     fi
 
     grep -q 'kzalloc_flex' "$slab" || printf '%s\n' alloc-flex
+
+    ((current_rx)) || printf '%s\n' rx-link-sta
 }
 
 apply_patches() {

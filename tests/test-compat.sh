@@ -8,11 +8,19 @@ BUILD_LEGACY="$ROOT_DIR/tests/build-legacy-kernel.sh"
 ACTION_PATCH="$ROOT_DIR/patches/legacy-action-frame-api.patch"
 EML_PATCH="$ROOT_DIR/patches/legacy-eml-api.patch"
 ALLOC_FLEX_PATCH="$ROOT_DIR/patches/legacy-alloc-flex-api.patch"
+RX_LINK_STA_PATCH="$ROOT_DIR/patches/legacy-rx-link-sta-api.patch"
 WIRELESS_NEXT_REPO="https://git.kernel.org/pub/scm/linux/kernel/git/wireless/wireless-next.git"
 WIRELESS_NEXT_PLAIN="https://git.kernel.org/pub/scm/linux/kernel/git/wireless/wireless-next.git/plain"
 TEST_DIR="$(mktemp -d)"
 SOURCE_DIR="$TEST_DIR/wireless-next"
 WIRELESS_NEXT_SHA=''
+
+RX_LIST_LEGACY_API='void ieee80211_rx_list(struct ieee80211_hw *hw, struct ieee80211_sta *sta,
+struct sk_buff *skb, struct list_head *list);'
+
+RX_LIST_CURRENT_API='void ieee80211_rx_list(struct ieee80211_hw *hw,
+struct ieee80211_link_sta *link_sta,
+struct sk_buff *skb, struct list_head *list);'
 
 NAN_UAPI_CONTRACT='NL80211_IFTYPE_NAN,
 NL80211_IFTYPE_NAN_DATA,
@@ -113,9 +121,10 @@ fail() {
 
 make_fixture() {
     local generation=$1
+    local rx_api=${2-auto}
     local kdir="$TEST_DIR/$generation"
     local action_macro eml_symbols alloc_flex nan_uapi nan_ieee80211 cfg_nan mac_nan
-    local aql_decl aql_export
+    local aql_decl aql_export rx_list_decl
 
     nan_uapi=''
     nan_ieee80211=''
@@ -163,6 +172,25 @@ make_fixture() {
             ;;
     esac
 
+    if [[ $rx_api == auto ]]; then
+        if [[ $generation == current ]]; then
+            rx_api=current
+        else
+            rx_api=legacy
+        fi
+    fi
+    case "$rx_api" in
+        legacy)
+            rx_list_decl=$RX_LIST_LEGACY_API
+            ;;
+        current)
+            rx_list_decl=$RX_LIST_CURRENT_API
+            ;;
+        *)
+            fail "unknown RX API fixture: $rx_api"
+            ;;
+    esac
+
     rm -rf "$kdir"
     mkdir -p "$kdir/include/linux" "$kdir/include/net" "$kdir/include/uapi/linux"
     printf '%s\n' "$action_macro" > "$kdir/include/linux/ieee80211.h"
@@ -174,7 +202,7 @@ make_fixture() {
     printf '%s\n' "$nan_ieee80211" > "$kdir/include/linux/ieee80211-nan.h"
     printf '%s\n' "$nan_uapi" > "$kdir/include/uapi/linux/nl80211.h"
     printf '%s\n' "$cfg_nan" > "$kdir/include/net/cfg80211.h"
-    printf '%s\n' "$mac_nan" "$aql_decl" > "$kdir/include/net/mac80211.h"
+    printf '%s\n' "$mac_nan" "$aql_decl" "$rx_list_decl" > "$kdir/include/net/mac80211.h"
     printf '%s\n' "$alloc_flex" > "$kdir/include/linux/slab.h"
     printf '%s\n' "$aql_export" > "$kdir/Module.symvers"
     printf '%s\n' "$kdir"
@@ -416,7 +444,7 @@ EOF
     done
     [[ -n $kbuild_dir && $mt76_dir == "$kbuild_dir/drivers/net/wireless/mediatek/mt76" ]] ||
         fail 'current-native build did not use one wireless-next source/header generation'
-    if grep -A1 '^Compatibility patches:$' "$output" | grep -Eq '^(action-frame|eml|nan|aql|alloc-flex)$'; then
+    if grep -A1 '^Compatibility patches:$' "$output" | grep -Eq '^(action-frame|eml|nan|aql|alloc-flex|rx-link-sta)$'; then
         fail 'current-native build selected a compatibility patch'
     fi
 
@@ -446,7 +474,8 @@ assert_aql_without_symvers() {
         fail 'detection failed without an AQL declaration'
     fi
     [[ ! -s $stderr ]] || fail 'detection read missing Module.symvers without an AQL declaration'
-    [[ $actual == aql ]] || fail "missing AQL declaration: expected aql, got $(printf '%q' "$actual")"
+    [[ $actual == $'aql\nrx-link-sta' ]] ||
+        fail "missing AQL declaration: expected aql and rx-link-sta, got $(printf '%q' "$actual")"
 }
 
 assert_unsupported() {
@@ -532,9 +561,10 @@ assert_action_patch_scope() {
 make_apply_fixture() {
     local action_generation=$1
     local eml_generation=$2
+    local rx_generation=$3
     local kdir
 
-    kdir=$(make_fixture current)
+    kdir=$(make_fixture current "$rx_generation")
     if [[ $action_generation == legacy ]]; then
         printf '%s\n' '#define IEEE80211_MIN_ACTION_SIZE 24' > "$kdir/include/linux/ieee80211.h"
     fi
@@ -549,11 +579,12 @@ make_apply_fixture() {
 assert_applied_patches() {
     local action_generation=$1
     local eml_generation=$2
-    local expected=$3
+    local rx_generation=$3
+    local expected=$4
     local kdir actual
 
     reset_source
-    kdir=$(make_apply_fixture "$action_generation" "$eml_generation")
+    kdir=$(make_apply_fixture "$action_generation" "$eml_generation" "$rx_generation")
     actual=$("$COMPAT" apply "$SOURCE_DIR" "$kdir")
     [[ $actual == "$expected" ]] ||
         fail "$action_generation/$eml_generation: expected $(printf '%q' "$expected"), got $(printf '%q' "$actual")"
@@ -592,7 +623,22 @@ assert_applied_patches() {
             fail 'unselected EML patch changed the transition-delay name'
     fi
 
-    if [[ $action_generation == current && $eml_generation == current ]]; then
+    if [[ $rx_generation == legacy ]]; then
+        grep -Fq 'ieee80211_rx_list(hw, sta, skb, &list)' \
+            "$SOURCE_DIR/drivers/net/wireless/mediatek/mt76/mac80211.c" ||
+            fail 'selected RX patch did not restore the station-based RX call'
+        grep -Fq 'struct ieee80211_sta **sta)' \
+            "$SOURCE_DIR/drivers/net/wireless/mediatek/mt76/mac80211.c" ||
+            fail 'selected RX patch did not restore the station-based convert signature'
+        git -C "$SOURCE_DIR" apply --reverse --check "$RX_LINK_STA_PATCH"
+    else
+        grep -Fq 'ieee80211_rx_list(hw, link_sta, skb, &list)' \
+            "$SOURCE_DIR/drivers/net/wireless/mediatek/mt76/mac80211.c" ||
+            fail 'unselected RX patch changed the link-station RX call'
+    fi
+
+    if [[ $action_generation == current && $eml_generation == current &&
+          $rx_generation == current ]]; then
         git -C "$SOURCE_DIR" diff --quiet ||
             fail 'current fixture changed the wireless-next source'
     fi
@@ -604,7 +650,7 @@ assert_v7_0_patch_scope() {
     reset_source
     kdir=$(make_fixture v7.0)
     actual=$("$COMPAT" apply "$SOURCE_DIR" "$kdir")
-    [[ $actual == $'action-frame\neml\nnan\naql' ]] ||
+    [[ $actual == $'action-frame\neml\nnan\naql\nrx-link-sta' ]] ||
         fail "v7.0: expected all compatibility patches, got $(printf '%q' "$actual")"
 
     mt76_dir="$SOURCE_DIR/drivers/net/wireless/mediatek/mt76"
@@ -627,7 +673,7 @@ assert_v6_18_patch_scope() {
     reset_source
     kdir=$(make_fixture v6.18)
     actual=$("$COMPAT" apply "$SOURCE_DIR" "$kdir")
-    [[ $actual == $'action-frame\neml\nnan\naql\nalloc-flex' ]] ||
+    [[ $actual == $'action-frame\neml\nnan\naql\nalloc-flex\nrx-link-sta' ]] ||
         fail "v6.18: expected all compatibility patches, got $(printf '%q' "$actual")"
 
     agg_rx="$SOURCE_DIR/drivers/net/wireless/mediatek/mt76/agg-rx.c"
@@ -658,10 +704,10 @@ assert_failed_preflight_is_atomic() {
         fail "failed preflight changed source files: $(printf '%q' "$changed_files")"
 }
 
-assert_patches v6.18 $'action-frame\neml\nnan\naql\nalloc-flex'
-assert_patches v7.0 $'action-frame\neml\nnan\naql'
-assert_patches v7.1 $'eml\nnan\naql'
-assert_patches v7.2 $'aql'
+assert_patches v6.18 $'action-frame\neml\nnan\naql\nalloc-flex\nrx-link-sta'
+assert_patches v7.0 $'action-frame\neml\nnan\naql\nrx-link-sta'
+assert_patches v7.1 $'eml\nnan\naql\nrx-link-sta'
+assert_patches v7.2 $'aql\nrx-link-sta'
 assert_patches current ''
 assert_nan_contract_fail_closed
 assert_kbuild_tool_args
@@ -669,15 +715,17 @@ assert_aql_without_symvers
 
 assert_unsupported include/linux/ieee80211.h '#define IEEE80211_MIN_ACTION_LENGTH 24'
 assert_unsupported include/linux/ieee80211-eht.h '#define IEEE80211_EML_CAP_UNKNOWN 0'
+assert_unsupported include/net/mac80211.h 'void ieee80211_rx_list(void);'
 
 copy_wireless_next_tree
 assert_action_patch_scope
 assert_v6_18_patch_scope
 assert_v7_0_patch_scope
 assert_failed_preflight_is_atomic
-assert_applied_patches legacy legacy $'action-frame\neml'
-assert_applied_patches legacy current 'action-frame'
-assert_applied_patches current legacy 'eml'
-assert_applied_patches current current ''
+assert_applied_patches legacy legacy current $'action-frame\neml'
+assert_applied_patches legacy current current 'action-frame'
+assert_applied_patches current legacy current 'eml'
+assert_applied_patches current current legacy $'rx-link-sta'
+assert_applied_patches current current current ''
 
 printf 'Compatibility detection and split patch tests passed at %s.\n' "$WIRELESS_NEXT_SHA"
